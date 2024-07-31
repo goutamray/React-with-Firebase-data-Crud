@@ -1,0 +1,29 @@
+  
+  
+  
+// firebase database data get 
+import { doc, getFirestore, serverTimestamp, setDoc,} from "firebase/firestore";
+
+import { fireBaseApp } from "./firebase";
+  
+  
+  
+  // init database
+ const db = getFirestore(fireBaseApp)
+
+ const getDevs = async () => {
+   const dev = await setDoc(doc(db, "devs", "555fdhysrey"), {
+     name : "Goutam ray sujan",
+     age : 35, 
+     skill : "mern Stack",
+     createdAt :  serverTimestamp(),  
+
+   });
+
+   console.log(dev.data()); 
+ }
+ getDevs()
+
+
+
+ 
