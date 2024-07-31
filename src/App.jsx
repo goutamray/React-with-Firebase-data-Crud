@@ -2,18 +2,27 @@
 
 import { useEffect, useState } from 'react'
 import './App.css'
-import { createDev, getAllDev } from './firebase/database'
+import { createDev, deleteSingleDev, getAllDevRealTime } from './firebase/database';
+import { serverTimestamp } from 'firebase/firestore';
+
+import { getDownloadURL, ref , uploadBytesResumable,  } from 'firebase/storage';
+import { storage } from './firebase';
+
 
 function App() {
   const [input, setInput] = useState({
     name : "",
     age : "",
     skill : "",
+    photo: "",
+    createdAt : serverTimestamp(),
+    status : true,
+    trash : false, 
   });
+
   const [devdata, setDevData] = useState([]); 
 
-  console.log(devdata);
-
+  const [file, setFile] = useState([]); 
 
 
   // handle input change 
@@ -28,20 +37,36 @@ function App() {
  // create new dev
  const handleDevsCreate = async (e) => {
    e.preventDefault();
-   await createDev("devs", input)
+
+  const fileRef = ref(storage, file.name); 
+
+ const fileData = await uploadBytesResumable(fileRef, file);
+
+  const link = await getDownloadURL(fileData.ref);
+
+
+   await createDev("devs", {...input, photo : link} ); 
+   setInput({
+      name : "",
+      age : "",
+      skill : "",
+      photo: "",
+   })
+   e.target.reset(); 
  };
+
+
+ // delete single dev
+ const handleDeleteDev = async (id) => {
+    await deleteSingleDev("devs", id)
+ }
 
 
  // get all devs 
   useEffect(() => {
-  const getDevsData = async() => {
-    const ddd = await getAllDev("devs");
-    setDevData(ddd);
-  
-  };
-  
-  getDevsData();
- }, [] )
+     getAllDevRealTime("devs", setDevData);
+
+ }, []); 
 
 
 
@@ -73,11 +98,17 @@ function App() {
                     <input 
                       type="text" 
                       placeholder='Skill' 
-                      className='form-control'
+                      className='form-control mb-1'
                       name='skill'
                       value={input.skill}
                       onChange={handleInputChange}
                       />
+                    <input 
+                      type="file" 
+                      className='form-control'
+                      onChange={(e) => setFile(e.target.files[0])}
+                      />
+
                     <button type='submit' className='btn btn-primary mt-2'> Create </button>
                   </form>
                </div>
@@ -93,6 +124,7 @@ function App() {
                   <thead>
                        <tr>
                          <th> # </th>
+                         <th> Photo </th>
                          <th> Name </th>
                          <th> Age </th>
                          <th> Skill </th>
@@ -104,13 +136,18 @@ function App() {
                       devdata.map((item, index) => {
                         return  <tr key={index}>
                         <td> { index + 1} </td>
+
+                        <td> 
+                          <img src={item.photo} style={{width : "50px", height: "50px", borderRadius: "50%"}} alt="" />
+                        </td>
+
                         <td> {item.name}</td>
                         <td> {item.age} </td>
                         <td> {item.skill} </td>
                         <td> 
                           <button className='btn btn-sm btn-info'> View </button>
                           <button className='mx-1 btn btn-sm btn-warning'> Edit </button>
-                          <button className='btn btn-sm btn-danger'> Delete </button>
+                          <button className='btn btn-sm btn-danger' onClick={() => handleDeleteDev(item.id)}> Delete </button>
                         </td>
                      </tr>
                       })

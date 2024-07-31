@@ -1,13 +1,18 @@
 
-import { addDoc, collection, getDocs, getFirestore, onSnapshot } from "firebase/firestore"
+import { addDoc, collection,  deleteDoc,  doc,  getFirestore, onSnapshot, orderBy, query } from "firebase/firestore"
 import { fireBaseApp } from "."
 
 
 // init database 
-const db = getFirestore(fireBaseApp)
+ const db = getFirestore(fireBaseApp)
 
-
-// create doc
+/**
+ * 
+ * @param {
+ * } collName 
+ * @param {*} data 
+ * @returns 
+ */
 export const createDev = async (collName, data) => {
  return await addDoc(collection(db, collName), {
   ...data
@@ -15,31 +20,55 @@ export const createDev = async (collName, data) => {
 };
 
 
-// get all devs
-export const getAllDev = async (collName) => {
-   const data = await getDocs(collection(db, collName));
+/***
+ * 
+ ****  get all devs 
+ */ 
+
+// export const getAllDev = async (collName) => {
+//    const data = await getDocs(collection(db, collName));
   
-   const devList  = [];
+//    const devList  = [];
 
-   data.forEach((item) => {
-    devList.push(item.data())
-   });
+//    data.forEach((item) => {
+//     devList.push(item.data())
+//    });
 
-   return devList; 
+//    return devList; 
+// }; 
+
+
+/***
+ * 
+ *  get real time data 
+ */
+
+export const getAllDevRealTime =  (collName, stateName) => {
+  onSnapshot(
+     query(collection(db, collName), 
+     orderBy("createdAt", "desc")), 
+    (snapshot) => {
+    const devList = [];
+
+    snapshot.docs.forEach((item) => {
+      devList.push({...item.data(), id : item.id}); 
+    })
+    console.log(devList);
+    stateName(devList);
+  })
 }; 
 
 
-// get all devs real time
-export const getAllDevRealTime = async (collName) => {
-   const snapshot = onSnapshot(collection(db, collName));
-  
-   (snapshot) => {
-    const devList  = [];
 
-    snapshot.forEach((item) => {
-     devList.push(item.data())
-    });
-    return devList; 
-   }
+/**
+ * 
+ * delete devs 
+ */
+export const deleteSingleDev = async (collName, id) => {
+   const data = await deleteDoc(doc(db, collName, id));
+   
+   return data; 
+
 }; 
+
 
